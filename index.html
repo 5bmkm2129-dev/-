@@ -1,1 +1,196 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#111827">
+<title>ミラコスタ11時</title>
+<style>
+:root{--bg:#0b1020;--card:#141b2d;--card2:#1a2237;--text:#f7f8fb;--muted:#9aa6bd;--line:#2a3551;--blue:#4f8cff;--green:#37d67a;--yellow:#ffcc66}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+body{padding:env(safe-area-inset-top) 14px calc(22px + env(safe-area-inset-bottom))}
+.wrap{max-width:640px;margin:0 auto}h1{font-size:24px;margin:14px 4px 4px}.sub{color:var(--muted);font-size:13px;line-height:1.55;margin:0 4px 14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px;margin:12px 0}
+.clock{text-align:center}#clock{font-variant-numeric:tabular-nums;font-weight:800;font-size:38px;letter-spacing:.6px}#dateNow{font-size:13px;color:var(--muted);margin-top:4px}
+label{display:block;font-size:12px;color:var(--muted);margin:0 0 6px}input[type=date]{width:100%;border:1px solid var(--line);background:var(--card2);color:var(--text);border-radius:14px;padding:14px;font-size:18px}
+.row{display:flex;gap:8px;margin-top:10px}button{appearance:none;border:0;border-radius:14px;padding:15px 12px;font-size:16px;font-weight:750;width:100%;background:var(--card2);color:var(--text)}
+button:active{transform:scale(.985)}.harbor{background:var(--blue)}.grand{background:var(--green);color:#062b14}.warm{background:var(--yellow);color:#3f2d00}.hero{padding:20px 12px;font-size:18px}.small{font-size:13px;padding:11px 10px}
+.note{font-size:12px;line-height:1.55;color:var(--muted);margin-top:10px}.status{display:none;margin-top:10px;border-radius:12px;padding:10px;background:var(--card2);font-size:13px}
+table{width:100%;border-collapse:collapse;font-size:12px}th,td{border-bottom:1px solid var(--line);padding:8px 5px;text-align:left}th{color:var(--muted);font-weight:600}
+hr{border:0;border-top:1px solid var(--line);margin:14px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>ミラコスタ11時</h1>
+<p class="sub">テラスルーム（ハーバービュー／ハーバーグランドビュー）専用。実動確認済みの公式URL構造を使用。</p>
 
+<div class="card clock">
+<div id="clock">--:--:--.---</div>
+<div id="dateNow"></div>
+</div>
+
+<div class="card">
+<label>チェックイン日</label>
+<input id="stayDate" type="date">
+<div class="row">
+<button id="set4m" class="small">今日＋4か月</button>
+<button id="plus1" class="small">＋1日</button>
+<button id="minus1" class="small">－1日</button>
+</div>
+<p class="note">1泊・1室・大人2名固定。新規発売狙いでは「今日＋4か月」が基本。</p>
+</div>
+
+<div class="card">
+<button id="warmup" class="warm">① 公式トップを事前に開く</button>
+<p class="note">10:50台の準備用。ログイン・待合室確認に使います。</p>
+<hr>
+
+<button id="harbor" class="harbor hero">② ハーバービュー直行</button>
+<p class="note">hotelRoomCd: HODHMTKD0004N</p>
+
+<button id="grand" class="grand hero" style="margin-top:12px">② ハーバーグランドビュー直行</button>
+<p class="note">hotelRoomCd: HODHMTGD0004N</p>
+
+<div id="status" class="status"></div>
+</div>
+
+<div class="card">
+<div style="font-weight:800;margin-bottom:10px">押下履歴（この端末内だけ）</div>
+<table>
+<thead><tr><th>時刻</th><th>宿泊日</th><th>対象</th></tr></thead>
+<tbody id="logs"></tbody>
+</table>
+<div class="row">
+<button id="copyLogs" class="small">履歴をコピー</button>
+<button id="clearLogs" class="small">履歴を削除</button>
+</div>
+</div>
+</div>
+
+<script>
+const OFFICIAL_TOP='https://reserve.tokyodisneyresort.jp/top/';
+const BASE='https://reserve.tokyodisneyresort.jp/sp/hotel/list/';
+const ROOM_HARBOR='HODHMTKD0004N';
+const ROOM_GRAND='HODHMTGD0004N';
+const NAME_HARBOR='スペチアーレ・ルーム＆スイート　ポルト・パラディーゾ・サイド テラスルーム ハーバービュー';
+const NAME_GRAND='スペチアーレ・ルーム＆スイート　ポルト・パラディーゾ・サイド テラスルーム ハーバーグランドビュー';
+
+const $=id=>document.getElementById(id);
+const pad=(n,l=2)=>String(n).padStart(l,'0');
+
+function fmtInput(d){return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;}
+function fmtYmd(d){return `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}`;}
+function plusMonthsSameDay(date,months){
+  const day=date.getDate();
+  const first=new Date(date.getFullYear(),date.getMonth()+months,1);
+  const last=new Date(first.getFullYear(),first.getMonth()+1,0).getDate();
+  return new Date(first.getFullYear(),first.getMonth(),Math.min(day,last));
+}
+function loadDefaultDate(){
+  const saved=localStorage.getItem('mira_stay_date_v2');
+  $('stayDate').value=saved || fmtInput(plusMonthsSameDay(new Date(),4));
+}
+loadDefaultDate();
+
+$('stayDate').addEventListener('change',()=>localStorage.setItem('mira_stay_date_v2',$('stayDate').value));
+$('set4m').onclick=()=>{$('stayDate').value=fmtInput(plusMonthsSameDay(new Date(),4));localStorage.setItem('mira_stay_date_v2',$('stayDate').value);};
+$('plus1').onclick=()=>shiftDay(1);
+$('minus1').onclick=()=>shiftDay(-1);
+function shiftDay(n){
+  const d=new Date($('stayDate').value+'T12:00:00');
+  d.setDate(d.getDate()+n);
+  $('stayDate').value=fmtInput(d);
+  localStorage.setItem('mira_stay_date_v2',$('stayDate').value);
+}
+
+function clock(){
+  const n=new Date();
+  $('clock').textContent=`${pad(n.getHours())}:${pad(n.getMinutes())}:${pad(n.getSeconds())}.${pad(n.getMilliseconds(),3)}`;
+  $('dateNow').textContent=`${n.getFullYear()}年${n.getMonth()+1}月${n.getDate()}日`;
+  requestAnimationFrame(clock);
+}
+requestAnimationFrame(clock);
+
+function buildDirectUrl(roomCd, roomName){
+  if(!$('stayDate').value){alert('チェックイン日を選択してください');return null;}
+  const d=new Date($('stayDate').value+'T12:00:00');
+
+  const p=new URLSearchParams();
+  p.set('showWay','');
+  p.set('roomsNum','1');
+  p.set('adultNum','2');
+  p.set('childNum','0');
+  p.set('stayingDays','1');
+  p.set('useDate',fmtYmd(d));
+  p.set('cpListStr','');
+  p.set('childAgeBedInform','');
+  p.set('searchHotelCD','DHM');
+  p.set('searchHotelDiv','');
+  p.set('hotelName','');
+  p.set('searchHotelName','');
+  p.set('searchLayer','');
+  p.set('searchRoomName',roomName);
+  p.set('hotelSearchDetail','true');
+  p.set('detailOpenFlg','0');
+  p.set('checkPointStr','');
+  p.set('hotelChangeFlg','false');
+  p.set('removeSessionFlg','true');
+  p.set('returnFlg','false');
+  p.set('hotelShowFlg','');
+  p.set('displayType','data-hotel');
+  p.set('reservationStatus','1');
+  p.set('hotelRoomCd',roomCd);
+
+  return `${BASE}?${p.toString()}#section_${roomCd}`;
+}
+
+function logTap(label){
+  const n=new Date();
+  const item={
+    t:`${pad(n.getHours())}:${pad(n.getMinutes())}:${pad(n.getSeconds())}.${pad(n.getMilliseconds(),3)}`,
+    d:$('stayDate').value,
+    k:label
+  };
+  const arr=JSON.parse(localStorage.getItem('mira_logs_v2')||'[]');
+  arr.unshift(item);
+  localStorage.setItem('mira_logs_v2',JSON.stringify(arr.slice(0,50)));
+  renderLogs();
+}
+function renderLogs(){
+  const arr=JSON.parse(localStorage.getItem('mira_logs_v2')||'[]');
+  $('logs').innerHTML=arr.length
+    ? arr.map(x=>`<tr><td>${x.t}</td><td>${x.d}</td><td>${x.k}</td></tr>`).join('')
+    : '<tr><td colspan="3" style="color:#9aa6bd">履歴なし</td></tr>';
+}
+renderLogs();
+
+function openRoom(roomCd,roomName,label){
+  const url=buildDirectUrl(roomCd,roomName);
+  if(!url)return;
+  logTap(label);
+  $('status').style.display='block';
+  $('status').textContent=`${label}へ移動します`;
+  setTimeout(()=>location.href=url,20);
+}
+
+$('warmup').onclick=()=>{location.href=OFFICIAL_TOP;};
+$('harbor').onclick=()=>openRoom(ROOM_HARBOR,NAME_HARBOR,'ハーバービュー');
+$('grand').onclick=()=>openRoom(ROOM_GRAND,NAME_GRAND,'ハーバーグランドビュー');
+
+$('clearLogs').onclick=()=>{
+  if(confirm('押下履歴を削除しますか？')){
+    localStorage.removeItem('mira_logs_v2');
+    renderLogs();
+  }
+};
+$('copyLogs').onclick=async()=>{
+  const arr=JSON.parse(localStorage.getItem('mira_logs_v2')||'[]');
+  const text=arr.map(x=>`${x.t}\t${x.d}\t${x.k}`).join('\n');
+  try{await navigator.clipboard.writeText(text);alert('履歴をコピーしました');}
+  catch(e){alert('コピーできませんでした');}
+};
+</script>
+</body>
+</html>
