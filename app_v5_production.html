@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0b1020">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>ミラコスタ11時 V5</title>
+<style>
+:root{
+  --bg:#0b1020;--card:#141b2d;--card2:#1a2237;--text:#f7f8fb;--muted:#9aa6bd;
+  --line:#2a3551;--blue:#4f8cff;--green:#37d67a;--yellow:#ffcc66;
+}
+*{box-sizing:border-box}
+html,body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif
+}
+body{padding:env(safe-area-inset-top) 14px calc(22px + env(safe-area-inset-bottom))}
+.wrap{max-width:640px;margin:0 auto}
+h1{font-size:24px;margin:14px 4px 4px}
+.sub,.note{color:var(--muted);font-size:13px;line-height:1.55}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px;margin:12px 0}
+.clock{text-align:center}
+#clock{font-variant-numeric:tabular-nums;font-weight:850;font-size:40px;letter-spacing:.2px}
+#dateNow{margin-top:4px;color:var(--muted);font-size:13px}
+.badge{display:inline-block;background:var(--card2);color:var(--muted);border-radius:999px;padding:5px 9px;font-size:11px;margin-top:8px}
+label{display:block;color:var(--muted);font-size:12px;margin-bottom:6px}
+input[type=date]{
+  width:100%;border:1px solid var(--line);background:var(--card2);color:var(--text);
+  border-radius:14px;padding:14px;font-size:18px
+}
+.row{display:flex;gap:8px;margin-top:10px}
+button{
+  appearance:none;border:0;border-radius:14px;padding:16px 12px;font-size:16px;
+  font-weight:800;width:100%;background:var(--card2);color:var(--text);
+  -webkit-tap-highlight-color:transparent
+}
+button:active{transform:scale(.985)}
+.warm{background:var(--yellow);color:#3f2d00}
+.harbor{background:var(--blue)}
+.grand{background:var(--green);color:#062b14}
+.hero{padding:22px 12px;font-size:19px}
+.small{font-size:13px;padding:11px 9px}
+.status{
+  margin-top:12px;padding:11px 12px;border-radius:12px;background:#0d1426;
+  border:1px solid var(--line);font-size:12px;line-height:1.5;color:var(--muted)
+}
+strong{color:var(--text)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>ミラコスタ11時 V5</h1>
+  <p class="sub">iPhone本番用。実機で空室時の直行を確認できた方式だけを使用します。</p>
+
+  <div class="card clock">
+    <div id="clock">--:--:--.---</div>
+    <div id="dateNow"></div>
+    <div class="badge">V1実機検証方式 / 最新版自動取得</div>
+  </div>
+
+  <div class="card">
+    <label>チェックイン日</label>
+    <input id="stayDate" type="date">
+    <div class="row">
+      <button id="set4m" class="small">今日＋4か月</button>
+      <button id="minus1" class="small">－1日</button>
+      <button id="plus1" class="small">＋1日</button>
+    </div>
+    <div class="status">
+      <strong>固定条件：</strong> 1泊 / 1室 / 大人2名<br>
+      宿泊日は変更時にURLを事前生成します。予約ボタン押下時には再計算しません。
+    </div>
+  </div>
+
+  <div class="card">
+    <button id="warmup" class="warm">① 公式予約サイトを事前に開く</button>
+    <p class="note">待合室・ログイン確認など、11時前の手動準備用です。</p>
+
+    <button id="harbor" class="harbor hero" style="margin-top:16px">
+      ② ハバテラ<br>
+      <span style="font-size:13px;font-weight:650">テラスルーム ハーバービュー</span>
+    </button>
+
+    <button id="grand" class="grand hero" style="margin-top:12px">
+      ② ハバグラ<br>
+      <span style="font-size:13px;font-weight:650">テラスルーム ハーバーグランドビュー</span>
+    </button>
+
+    <p class="note" style="margin-top:14px">
+      スマホでは上部の「ミラコスタ」に✓が表示されない場合があります。
+      <strong>✓ではなく、対象客室が直接開くかで判断</strong>してください。
+    </p>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const pad = (n,l=2) => String(n).padStart(l,'0');
+
+const OFFICIAL_TOP = 'https://reserve.tokyodisneyresort.jp/top/';
+
+const HARBOR_CODE = 'HODHMTKD0004N';
+const GRAND_CODE  = 'HODHMTGD0004N';
+
+const HARBOR_NAME =
+'%E3%82%B9%E3%83%9A%E3%83%81%E3%82%A2%E3%83%BC%E3%83%AC%E3%83%BB%E3%83%AB%E3%83%BC%E3%83%A0%EF%BC%86%E3%82%B9%E3%82%A4%E3%83%BC%E3%83%88%E3%80%80%E3%83%9D%E3%83%AB%E3%83%88%E3%83%BB%E3%83%91%E3%83%A9%E3%83%87%E3%82%A3%E3%83%BC%E3%82%BE%E3%83%BB%E3%82%B5%E3%82%A4%E3%83%89%20%E3%83%86%E3%83%A9%E3%82%B9%E3%83%AB%E3%83%BC%E3%83%A0%20%E3%83%8F%E3%83%BC%E3%83%90%E3%83%BC%E3%83%93%E3%83%A5%E3%83%BC';
+
+const GRAND_NAME =
+'%E3%82%B9%E3%83%9A%E3%83%81%E3%82%A2%E3%83%BC%E3%83%AC%E3%83%BB%E3%83%AB%E3%83%BC%E3%83%A0%EF%BC%86%E3%82%B9%E3%82%A4%E3%83%BC%E3%83%88%E3%80%80%E3%83%9D%E3%83%AB%E3%83%88%E3%83%BB%E3%83%91%E3%83%A9%E3%83%87%E3%82%A3%E3%83%BC%E3%82%BE%E3%83%BB%E3%82%B5%E3%82%A4%E3%83%89%20%E3%83%86%E3%83%A9%E3%82%B9%E3%83%AB%E3%83%BC%E3%83%A0%20%E3%83%8F%E3%83%BC%E3%83%90%E3%83%BC%E3%82%B0%E3%83%A9%E3%83%B3%E3%83%89%E3%83%93%E3%83%A5%E3%83%BC';
+
+let harborURL = '';
+let grandURL = '';
+
+function fmtInput(d){
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+
+function plusMonthsSameDay(date,months){
+  const day = date.getDate();
+  const first = new Date(date.getFullYear(), date.getMonth()+months, 1);
+  const last = new Date(first.getFullYear(), first.getMonth()+1, 0).getDate();
+  return new Date(first.getFullYear(), first.getMonth(), Math.min(day,last));
+}
+
+function date8(){
+  return $('stayDate').value.replaceAll('-','');
+}
+
+function buildURL(code,name,d){
+  return 'https://reserve.tokyodisneyresort.jp/sp/hotel/list/?'+
+    'showWay=&roomsNum=1&adultNum=2&childNum=0&stayingDays=1&useDate='+d+
+    '&cpListStr=&childAgeBedInform=&searchHotelCD=DHM&searchHotelDiv=&hotelName=&searchHotelName=&searchLayer='+
+    '&searchRoomName='+name+
+    '&hotelSearchDetail=true&detailOpenFlg=0&checkPointStr=&hotelChangeFlg=false'+
+    '&removeSessionFlg=true&returnFlg=false&hotelShowFlg=&displayType=data-hotel'+
+    '&reservationStatus=1&hotelRoomCd='+code+
+    '#section_'+code;
+}
+
+function prepareURLs(){
+  const d = date8();
+  if(!d){ harborURL=''; grandURL=''; return; }
+  harborURL = buildURL(HARBOR_CODE, HARBOR_NAME, d);
+  grandURL  = buildURL(GRAND_CODE, GRAND_NAME, d);
+  localStorage.setItem('mira_v5_date', $('stayDate').value);
+}
+
+function setDefault(){
+  const saved = localStorage.getItem('mira_v5_date');
+  $('stayDate').value = saved || fmtInput(plusMonthsSameDay(new Date(),4));
+  prepareURLs();
+}
+
+setDefault();
+
+$('stayDate').addEventListener('change', prepareURLs);
+
+$('set4m').onclick = () => {
+  $('stayDate').value = fmtInput(plusMonthsSameDay(new Date(),4));
+  prepareURLs();
+};
+
+function shift(n){
+  const d = new Date($('stayDate').value+'T12:00:00');
+  d.setDate(d.getDate()+n);
+  $('stayDate').value = fmtInput(d);
+  prepareURLs();
+}
+$('minus1').onclick = () => shift(-1);
+$('plus1').onclick  = () => shift(1);
+
+function updateClock(){
+  const n = new Date();
+  $('clock').textContent =
+    `${pad(n.getHours())}:${pad(n.getMinutes())}:${pad(n.getSeconds())}.${pad(n.getMilliseconds(),3)}`;
+  $('dateNow').textContent =
+    `${n.getFullYear()}年${n.getMonth()+1}月${n.getDate()}日`;
+  requestAnimationFrame(updateClock);
+}
+requestAnimationFrame(updateClock);
+
+$('warmup').onclick = () => { location.href = OFFICIAL_TOP; };
+$('harbor').onclick = () => { if(harborURL) location.href = harborURL; };
+$('grand').onclick  = () => { if(grandURL)  location.href = grandURL; };
+
+// iOSがBFCacheからこのページを復元した時は、日付とURLだけ再同期。
+window.addEventListener('pageshow', () => prepareURLs());
+</script>
+</body>
+</html>
