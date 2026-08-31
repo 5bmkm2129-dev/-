@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#0b1020">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>ミラコスタ 4か月カレンダー診断</title>
+<style>
+:root{
+  --bg:#0b1020;--card:#141b2d;--card2:#1a2237;--text:#f7f8fb;--muted:#9aa6bd;
+  --line:#2a3551;--blue:#4f8cff;--green:#37d67a;--red:#ef4444;
+}
+*{box-sizing:border-box}
+html,body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif
+}
+body{padding:env(safe-area-inset-top) 14px calc(24px + env(safe-area-inset-bottom))}
+.wrap{max-width:680px;margin:0 auto}
+h1{font-size:24px;margin:14px 4px 4px}
+h2{font-size:17px;margin:0 0 8px}
+.sub,.note{color:var(--muted);font-size:13px;line-height:1.6}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px;margin:12px 0}
+button{
+  appearance:none;border:0;border-radius:14px;padding:21px 12px;font-size:18px;font-weight:800;
+  width:100%;color:#fff;-webkit-tap-highlight-color:transparent
+}
+button:active{transform:scale(.985)}
+.harbor{background:var(--blue)}
+.grand{background:var(--green);color:#062b14}
+.result{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.result button{font-size:12px;padding:10px 7px;background:var(--card2)}
+.ok{background:#166534!important}.ng{background:#991b1b!important}
+.badge{
+  display:inline-block;background:var(--card2);color:var(--muted);
+  border-radius:999px;padding:5px 9px;font-size:11px;margin-bottom:8px
+}
+.status{
+  padding:11px 12px;border-radius:12px;background:#0d1426;
+  border:1px solid var(--line);font-size:12px;line-height:1.55;color:var(--muted)
+}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th,td{padding:8px 5px;border-bottom:1px solid var(--line);text-align:left}
+th{color:var(--muted)}
+.small{font-size:13px!important;padding:11px 8px!important;background:var(--card2)!important}
+strong{color:var(--text)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>ミラコスタ 4か月カレンダー診断</h1>
+  <p class="sub">
+    ハバテラ／ハバグラの客室指定カレンダーを、公式サイトの最小構成URLで開くテストです。
+  </p>
+
+  <div class="card">
+    <span class="badge">検証専用</span>
+    <div class="status">
+      <strong>今回のURLは3項目だけです。</strong><br>
+      <code>displayType=hotel-search</code><br>
+      <code>hotelRoomCd=客室コード</code><br>
+      <code>searchHotelCD=DHM</code><br><br>
+      日付・人数・searchRoomNameは付けません。
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>ハバテラ</h2>
+    <p class="note">
+      テラスルーム（ハーバービュー）<br>
+      <code>HODHMTKD0004N</code>
+    </p>
+    <button id="harbor" class="harbor">
+      ハバテラの客室カレンダーを開く
+    </button>
+
+    <div class="result">
+      <button class="ok" data-mode="ハバテラ" data-result="カレンダー正常">カレンダー正常</button>
+      <button class="ng" data-mode="ハバテラ" data-result="固まる/エラー">固まる・エラー</button>
+      <button data-mode="ハバテラ" data-result="4か月まで移動可">4か月まで見られる</button>
+      <button data-mode="ハバテラ" data-result="4か月不可">4か月は見られない</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>ハバグラ</h2>
+    <p class="note">
+      テラスルーム（ハーバーグランドビュー）<br>
+      <code>HODHMTGD0004N</code>
+    </p>
+    <button id="grand" class="grand">
+      ハバグラの客室カレンダーを開く
+    </button>
+
+    <div class="result">
+      <button class="ok" data-mode="ハバグラ" data-result="カレンダー正常">カレンダー正常</button>
+      <button class="ng" data-mode="ハバグラ" data-result="固まる/エラー">固まる・エラー</button>
+      <button data-mode="ハバグラ" data-result="4か月まで移動可">4か月まで見られる</button>
+      <button data-mode="ハバグラ" data-result="4か月不可">4か月は見られない</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>確認してほしいこと</h2>
+    <p class="note">
+      ① 指定した客室のカレンダーになっているか<br>
+      ② 1か月分の空室状況が表示されるか<br>
+      ③ 「次の月」などで4か月先まで移動できるか<br>
+      ④ 月を切り替えたとき客室指定が維持されるか<br><br>
+      <strong>「4か月分が同時に1画面表示されるか」ではなく、
+      1回開いた公式カレンダーの中で4か月分を連続して確認できるか</strong>を見ます。
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>検証履歴</h2>
+    <table>
+      <thead><tr><th>時刻</th><th>対象</th><th>結果</th></tr></thead>
+      <tbody id="logs"></tbody>
+    </table>
+    <button id="clearLogs" class="small" style="margin-top:10px">履歴を削除</button>
+  </div>
+</div>
+
+<script>
+const HARBOR =
+  'https://reserve.tokyodisneyresort.jp/sp/hotel/list/?displayType=hotel-search&hotelRoomCd=HODHMTKD0004N&searchHotelCD=DHM';
+
+const GRAND =
+  'https://reserve.tokyodisneyresort.jp/sp/hotel/list/?displayType=hotel-search&hotelRoomCd=HODHMTGD0004N&searchHotelCD=DHM';
+
+document.getElementById('harbor').onclick = () => {
+  addLog('ハバテラ','アクセス');
+  location.href = HARBOR;
+};
+
+document.getElementById('grand').onclick = () => {
+  addLog('ハバグラ','アクセス');
+  location.href = GRAND;
+};
+
+function pad(n){return String(n).padStart(2,'0');}
+
+function addLog(mode,result){
+  const n = new Date();
+  const item = {
+    t:`${pad(n.getHours())}:${pad(n.getMinutes())}:${pad(n.getSeconds())}`,
+    m:mode,
+    r:result
+  };
+  const arr = JSON.parse(localStorage.getItem('mira_calendar_diag_logs') || '[]');
+  arr.unshift(item);
+  localStorage.setItem('mira_calendar_diag_logs', JSON.stringify(arr.slice(0,40)));
+  renderLogs();
+}
+
+function renderLogs(){
+  const arr = JSON.parse(localStorage.getItem('mira_calendar_diag_logs') || '[]');
+  document.getElementById('logs').innerHTML = arr.length
+    ? arr.map(x=>`<tr><td>${x.t}</td><td>${x.m}</td><td>${x.r}</td></tr>`).join('')
+    : '<tr><td colspan="3" style="color:#9aa6bd">履歴なし</td></tr>';
+}
+renderLogs();
+
+document.querySelectorAll('[data-mode]').forEach(btn=>{
+  btn.onclick = () => addLog(btn.dataset.mode, btn.dataset.result);
+});
+
+document.getElementById('clearLogs').onclick = () => {
+  if(confirm('履歴を削除しますか？')){
+    localStorage.removeItem('mira_calendar_diag_logs');
+    renderLogs();
+  }
+};
+</script>
+</body>
+</html>
